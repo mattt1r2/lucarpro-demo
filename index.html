@@ -212,6 +212,15 @@ select:disabled { color:#697e87; background:#f4f7f8; opacity:1; }
 .specs dt { color:var(--muted); }
 .specs dd { font-weight:650; text-align:right; }
 .specs p { margin-top:13px; color:var(--muted); }
+.newsletter { background:var(--stage); border-top:1px solid var(--line); }
+.newsletter-inner { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,.85fr); align-items:center; gap:clamp(28px,6vw,84px); padding-block:clamp(32px,4vw,54px); }
+.newsletter-copy p { max-width:44ch; margin-top:9px; color:var(--muted); }
+.newsletter-form label { display:block; margin-bottom:6px; font-size:.92rem; font-weight:650; }
+.newsletter-fields { display:flex; align-items:stretch; gap:8px; }
+.newsletter-fields .text-input { min-width:0; flex:1; padding-inline:13px; border-color:#899f93; font-size:1rem; }
+.newsletter-fields .btn { background:var(--navy); }
+.newsletter-fields .btn:hover { background:var(--steel); }
+.newsletter-note { margin-top:8px; color:var(--muted); font-size:.88rem; }
 .store-footer { background:var(--navy); color:#dce9ed; }
 .footer-in { display:flex; justify-content:space-between; align-items:center; gap:26px; padding-block:26px; flex-wrap:wrap; }
 .footer-in .brand { font-size:1.55rem; }
@@ -295,6 +304,7 @@ dialog.drawer { margin:0 0 0 auto; height:100vh; height:100dvh; max-height:100dv
   .card-consult { min-height:44px; }
   .mode-categorias .catalog-block { padding-block:22px 34px; }
   .mode-categorias .heading-row h2 { font-size:1.65rem; }
+  .newsletter-inner { grid-template-columns:1fr; gap:18px; }
   .product-detail { gap:24px; }
   .detail-photo { height:250px; padding:20px; }
   .order { flex-wrap:wrap; }
@@ -343,6 +353,7 @@ dialog.drawer { margin:0 0 0 auto; height:100vh; height:100dvh; max-height:100dv
   .crumbs { margin-bottom:15px; font-size:.84rem; }
   .panel-inner { padding:19px; }
   .footer-in { align-items:flex-start; flex-direction:column; }
+  .newsletter-fields { flex-direction:column; }
   .foot-actions { gap:17px; }
 }
 @media (max-width:355px) {
@@ -543,7 +554,18 @@ function galleryHome() {
   return `<section class="wrap category-main"><h1>Repuestos para tu próxima mantención</h1><p class="intro">Explora el catálogo por tipo de repuesto.</p>
     <div class="tiles">${tiles.map(tile => `<a class="tile ${tile.style}" href="${selectedCategory(tile.family)}" aria-label="Ver categoría ${tile.family}">
       <div class="tile-inner"><h2>${tile.family}</h2><span class="sub">${tile.sub}</span><span class="tile-action">Ver categoría ${icon('arrow')}</span></div>${photo(tile.part)}</a>`).join('')}</div>
-    </section>${homeGrid('Del catálogo')}`;
+    </section>${homeGrid('Del catálogo')}
+    <section class="newsletter" id="boletin" aria-labelledby="boletin-titulo"><div class="wrap newsletter-inner">
+      <div class="newsletter-copy"><h2 id="boletin-titulo">Avísame cuando haya ofertas</h2>
+        <p>Recibe por correo las promociones de aceites, bujías y otros repuestos de Lucarpro.</p></div>
+      <form class="newsletter-form" data-form="newsletter" aria-labelledby="boletin-titulo">
+        <label for="boletin-correo">Correo electrónico</label>
+        <div class="newsletter-fields">
+          <input class="text-input" id="boletin-correo" type="email" required autocomplete="off" placeholder="nombre@ejemplo.cl" aria-describedby="boletin-nota">
+          <button class="btn" type="submit">Suscribirme</button>
+        </div>
+        <p class="newsletter-note" id="boletin-nota" role="status">Prueba el boletín con un correo de ejemplo.</p>
+      </form></div></section>`;
 }
 function noMatches(reset) {
   return `<div class="empty"><h3>Sin coincidencias</h3><p>Prueba con otro nombre, código o categoría.</p>
@@ -748,6 +770,10 @@ document.addEventListener('submit', event => {
   const q = String(data.get('q') || '').trim();
   const category = familyValue(data.get('categoria'));
   switch (form.dataset.form) {
+    case 'newsletter':
+      form.reset();
+      form.querySelector('[role="status"]').textContent = 'Suscripción de prueba confirmada.';
+      break;
     case 'catalog':
       redirect(linkTo('catalogo',{marca:route.q.get('marca'),modelo:route.q.get('modelo'),anio:route.q.get('anio'),q:q || null,categoria:category || null}));
       break;
@@ -786,7 +812,9 @@ function updateView() {
   else if (route.view === 'catalogo') main.innerHTML = catalogue();
   else main.innerHTML = galleryHome();
   document.title = (part ? part.name : route.view === 'catalogo' ? 'Catálogo de repuestos' : 'Repuestos por categoría') + ' · Lucarpro';
-  if (!firstRender) {
+  if (location.hash === '#boletin') {
+    document.getElementById('boletin').scrollIntoView();
+  } else if (!firstRender) {
     main.focus({preventScroll:true});
     window.scrollTo(0,0);
   }
